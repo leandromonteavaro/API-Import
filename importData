@@ -1,0 +1,780 @@
+//PARAMETROS usado en los request anteriores cuando los tokens duraban 180 días
+/*
+const paramsBombal = {
+  method: "GET",
+  contentType: 'application/json',
+  headers: { Authorization: "Bearer " + tokenBombal },
+  // muteHttpExceptions:true};
+}
+
+const paramsChacras1 = {
+  method: "GET",
+  contentType: 'application/json',
+  headers: { Authorization: "Bearer " + tokenChacras1 },
+  // muteHttpExceptions:true};
+}
+const paramsDorrego = {
+  method: "GET",
+  contentType: 'application/json',
+  headers: { Authorization: "Bearer " + tokenDorrego },
+  // muteHttpExceptions:true};
+}
+const paramsMaipu = {
+  method: "GET",
+  contentType: 'application/json',
+  headers: { Authorization: "Bearer " + tokenMaipu },
+  // muteHttpExceptions:true};
+}
+const paramsChacras2 = {
+  method: "GET",
+  contentType: 'application/json',
+  headers: { Authorization: "Bearer " + tokenChacras2 },
+  // muteHttpExceptions:true};
+}
+const paramsProduccion = {
+  method: "GET",
+  contentType: 'application/json',
+  headers: { Authorization: "Bearer " + tokenProduccion },
+  // muteHttpExceptions:true};
+}
+*/
+
+//URLs 
+const urlProductos = 'https://api.fu.do/v1alpha1/products';
+const urlIngredientes = 'https://api.fu.do/v1alpha1/ingredients';
+const urlVentas = 'https://api.fu.do/v1alpha1/sales?page[size]=500&page[number]=1';
+
+
+// FUNCIONES
+
+/*
+function getFudoAccessTokenBombal() {
+  var apiKey = "MjVANTMzMzQ=";
+  var apiSecret = "XWOxXuSDdCU2FAYlHHCsgWOF0h5x8EMp";
+  var apiUrl = "https://auth.fu.do/api"; // Use production or staging URL
+
+  var requestBody = {
+    apiKey: apiKey,
+    apiSecret: apiSecret
+  };
+
+  var headers = {
+    "Content-Type": "application/json"
+  };
+
+  var options = {
+    method: "post",
+    contentType: "application/json",
+    headers: headers,
+    payload: JSON.stringify(requestBody)
+  };
+
+  var response = UrlFetchApp.fetch(apiUrl, options);
+  var json = response.getContentText();
+  var data = JSON.parse(json);
+
+  var accessToken = data.token;
+  Logger.log(accessToken);
+  return accessToken;
+
+}
+*/
+function getFudoAccessTokenWithRetry(apiKey, apiSecret) {
+  var apiUrl = "https://auth.fu.do/api"; // Replace with the appropriate URL
+  var apiKey = "MjVANTMzMzQ=";
+  var apiSecret = "XWOxXuSDdCU2FAYlHHCsgWOF0h5x8EMp";
+  var requestBody = {
+    apiKey: apiKey,
+    apiSecret: apiSecret
+  };
+
+  var headers = {
+    "Content-Type": "application/json"
+  };
+
+  var options = {
+    method: "post",
+    contentType: "application/json",
+    headers: headers,
+    payload: JSON.stringify(requestBody),
+    muteHttpExceptions: true // This option allows you to examine the full response
+  };
+
+  var maxRetries = 3; // Adjust the number of retry attempts as needed
+  var retryCount = 0;
+  var response;
+
+  while (retryCount < maxRetries) {
+    response = UrlFetchApp.fetch(apiUrl, options);
+
+    if (response.getResponseCode() == 429) {
+      // If rate limited, wait for a while and retry
+      Utilities.sleep(5000); // Wait for 5 seconds (adjust as needed)
+      retryCount++;
+    } else {
+      break; // Successful response, exit retry loop
+    }
+  }
+
+  if (response.getResponseCode() == 429) {
+    throw new Error("Rate limit exceeded, giving up.");
+  } else if (response.getResponseCode() != 200) {
+    throw new Error("Failed to obtain access token. Response code: " + response.getResponseCode());
+  }
+
+  var content = response.getContentText();
+  var data = JSON.parse(content);
+  var accessToken = data.token;
+
+  return accessToken;
+}
+
+function getFudoAccessTokenMaipu() {
+  var apiKey = "OEA2Njg3Mg==";
+  var apiSecret = "jBTnhY4OnaZgppHOhH1Mm6C0kqFKiiDj";
+  var apiUrl = "https://auth.fu.do/api"; // Use production or staging URL
+
+  var requestBody = {
+    apiKey: apiKey,
+    apiSecret: apiSecret
+  };
+
+  var headers = {
+    "Content-Type": "application/json"
+  };
+
+  var options = {
+    method: "post",
+    contentType: "application/json",
+    headers: headers,
+    payload: JSON.stringify(requestBody)
+  };
+
+  var response = UrlFetchApp.fetch(apiUrl, options);
+  var json = response.getContentText();
+  var data = JSON.parse(json);
+
+  var accessTokenMaipu = data.token;
+  Logger.log(accessTokenMaipu);
+  return accessTokenMaipu;
+
+}
+
+function getFudoAccessTokenDorrego() {
+  var apiKey = "Njk2MDlAMzMzNzg=";
+  var apiSecret = "zOwTJFHUYz9L28pg73KHoRhB3l2C6Cpy";
+  var apiUrl = "https://auth.fu.do/api"; // Use production or staging URL
+
+  var requestBody = {
+    apiKey: apiKey,
+    apiSecret: apiSecret
+  };
+
+  var headers = {
+    "Content-Type": "application/json"
+  };
+
+  var options = {
+    method: "post",
+    contentType: "application/json",
+    headers: headers,
+    payload: JSON.stringify(requestBody)
+  };
+
+  var response = UrlFetchApp.fetch(apiUrl, options);
+  var json = response.getContentText();
+  var data = JSON.parse(json);
+
+  var accessTokenDorrego = data.token;
+  Logger.log(accessTokenDorrego);
+  return accessTokenDorrego;
+
+}
+
+function getFudoAccessTokenChacras() {
+  var apiKey = "MzVAMzcxOTU=";
+  var apiSecret = "8jpPdLhGu2se89zhBs7sDDGhfxcZ34k6";
+  var apiUrl = "https://auth.fu.do/api"; // Use production or staging URL
+
+  var requestBody = {
+    apiKey: apiKey,
+    apiSecret: apiSecret
+  };
+
+  var headers = {
+    "Content-Type": "application/json"
+  };
+
+  var options = {
+    method: "post",
+    contentType: "application/json",
+    headers: headers,
+    payload: JSON.stringify(requestBody)
+  };
+
+  var response = UrlFetchApp.fetch(apiUrl, options);
+  var json = response.getContentText();
+  var data = JSON.parse(json);
+
+  var accessTokenChacras = data.token;
+  Logger.log(accessTokenChacras);
+  return accessTokenChacras;
+
+}
+
+function makeFudoAPIRequest() {
+  var accessToken = getFudoAccessTokenBombal();
+  var apiUrl = "https://api.fu.do/v1alpha1"; // Replace with actual endpoint
+
+  var headers = {
+    "Authorization": "Bearer " + accessToken
+  };
+
+  var options = {
+    method: "get",
+    headers: headers
+  };
+
+  var response = UrlFetchApp.fetch(apiUrl, options);
+  var responseData = response.getContentText();
+  // Process responseData as needed
+}
+
+function importaVentas() {
+  var libro = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = libro.getSheetByName("Ventas");
+  var responseVentasBombal = UrlFetchApp.fetch(urlVentas, paramsBombal);
+
+  var content = responseVentasBombal.getContentText();
+  var jsonVentasBombal = JSON.parse(content);
+  Logger.log(jsonVentasBombal);
+  for (var i = 0; i < jsonVentasBombal["data"].length; i++) {
+
+    var idVentaBombal = jsonVentasBombal["data"][i]["attributes"];
+    Logger.log(idVentaBombal);
+    var { people, comment, createdAt, closedAt, total } = idVentaBombal;
+
+    var totalVenta = [total];
+    var creada = [createdAt];
+    Logger.log(total, creada);
+    hoja.getRange((i + 1) + 1, 1).setValue(totalVenta);
+    hoja.getRange((i + 1) + 1, 2).setValue(creada);
+
+  }
+
+}
+function guardarPDF() {
+  const carpetaMaestra = DriveApp.getFolderById("1RcQF9WQGS91GmN7dLQp0shVm3ejFscIl");
+
+  var libro = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Stock/Real");
+  var datos = libro.getRange(1, 1, libro.getLastRow() - 2, libro.getLastColumn() - 2).getValues();
+  Logger.log(datos);
+  var blob = libro.getAs('application/pdf');
+  var fecha = Utilities.formatDate(new Date(), "GMT-3", "dd/MM/yyyy");
+
+  carpetaMaestra.createFile(blob).setName(libro + " " + fecha);
+  Logger.log(libro);
+}
+function mostrar() {
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('B:Y').activate();
+  spreadsheet.getActiveSheet().showColumns(2, 25);
+
+};
+function mostrar() {
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('B:Y').activate();
+  spreadsheet.getActiveSheet().showColumns(2, 25);
+
+};
+
+function importaIngredientes() {
+  var accessToken = getFudoAccessTokenBombal();
+  var accessTokenChacras = getFudoAccessTokenChacras();
+  var accessTokenMaipu = getFudoAccessTokenMaipu();
+  var accessTokenDorrego = getFudoAccessTokenDorrego();
+  var apiUrl = "https://api.fu.do/v1alpha1/ingredients"; // Replace with actual endpoint
+
+  var headers = {
+    "Authorization": "Bearer " + accessToken
+  };
+  var options = {
+    method: "get",
+    headers: headers
+  };
+  var headersChacras = {
+    "Authorization": "Bearer " + accessTokenChacras
+  };
+  var optionsChacras = {
+    method: "get",
+    headers: headersChacras
+  };
+  var headersMaipu = {
+    "Authorization": "Bearer " + accessTokenMaipu
+  };
+  var optionsMaipu = {
+    method: "get",
+    headers: headersMaipu
+  };
+  var headersDorrego = {
+    "Authorization": "Bearer " + accessTokenDorrego
+  };
+  var optionsDorrego = {
+    method: "get",
+    headers: headersDorrego
+  };
+
+  var libro = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = libro.getSheetByName("Ingredientes");
+
+  var response = UrlFetchApp.fetch(apiUrl, options);
+  var responseDataBombal = response.getContentText();
+  var json = JSON.parse(responseDataBombal);
+  var responseDorrego = UrlFetchApp.fetch(apiUrl, optionsDorrego);
+  var contentDorrego = responseDorrego.getContentText();
+  var jsonDorrego = JSON.parse(contentDorrego);
+  var responseMaipu = UrlFetchApp.fetch(apiUrl, optionsMaipu);
+  var contentMaipu = responseMaipu.getContentText();
+  var jsonMaipu = JSON.parse(contentMaipu);
+   
+  var responseChacras1 = UrlFetchApp.fetch(apiUrl, optionsChacras);
+
+  var contentChacras1 = responseChacras1.getContentText();
+  var jsonChacras1 = JSON.parse(contentChacras1);
+  /*var responseChacras2 = UrlFetchApp.fetch(urlIngredientes, paramsChacras2);
+  var contentChacras2 = responseChacras2.getContentText();
+  var jsonChacras2 = JSON.parse(contentChacras2);
+
+
+  var responseProduccion = UrlFetchApp.fetch(urlIngredientes, paramsProduccion);
+  var contentProduccion = responseProduccion.getContentText();
+  var jsonProduccion = JSON.parse(contentProduccion);
+  */
+
+  //Acá hice la configuración de la pagina donde van a venir los datos
+
+  hoja.getRange(1, 1).setValue("Ingrediente Bombal");
+  hoja.getRange(1, 2).setValue("Cantidad Bombal");
+  hoja.getRange(1, 3).setValue("Ingrediente Dorrego");
+  hoja.getRange(1, 4).setValue("Cantidad Dorrego");
+  hoja.getRange(1, 5).setValue("Ingrediente Maipu");
+  hoja.getRange(1, 6).setValue("Cantidad Maipu");
+  hoja.getRange(1, 7).setValue("Ingrediente Chacras 1");
+  hoja.getRange(1, 8).setValue("Cantidad Chacras 1");
+  
+  // Bucles for para obtener y manejar los datos que obtuvimos mediante la API
+
+  for (var i = 0; i < json["data"].length; i++) {
+    var ingredientesBombal = json["data"][i]["attributes"];
+    var { stock, name } = ingredientesBombal;
+    var nombreIngredientesBombal = [name];
+    var stockIngredientesBombal = [stock];
+    hoja.getRange((i + 1) + 1, 1).setValue(nombreIngredientesBombal);
+    hoja.getRange((i + 1) + 1, 2).setValue(stockIngredientesBombal);
+  };
+
+    for (var j = 0; j < jsonDorrego["data"].length; j++) {
+      var ingredientesDorrego = jsonDorrego["data"][j]["attributes"];
+      var { stock, name, stockControl } = ingredientesDorrego;
+      var nombreIngredientesDorrego = [name];
+      var stockIngredientesDorrego = [stock];
+      hoja.getRange((j + 1) + 1, 3).setValue(nombreIngredientesDorrego);
+      hoja.getRange((j + 1) + 1, 4).setValue(stockIngredientesDorrego);
+    };
+
+    for (var k = 0; k < jsonMaipu["data"].length; k++) {
+      var ingredientesMaipu = jsonMaipu["data"][k]["attributes"];
+      var { stock, name } = ingredientesMaipu;
+      var nombreIngredientesMaipu = [name];
+      var stockIngredientesMaipu = [stock];
+      hoja.getRange((k + 1) + 1, 5).setValue(nombreIngredientesMaipu);
+      hoja.getRange((k + 1) + 1, 6).setValue(stockIngredientesMaipu);
+    };
+    /*
+    for (var l = 0; l < jsonChacras2["data"].length; l++) {
+      var ingredientesChacras2 = jsonChacras2["data"][l]["attributes"];
+      var { stock, name, stockControl } = ingredientesChacras2;
+      var nombreIngredientesChacras2 = [name];
+      var stockIngredientesChacras2 = [stock];
+      hoja.getRange((l + 1) + 1, 7).setValue(nombreIngredientesChacras2);
+      hoja.getRange((l + 1) + 1, 8).setValue(stockIngredientesChacras2);
+    };
+    */
+
+    for (var n = 0; n < jsonChacras1["data"].length; n++) {
+      var ingredientesChacras2 = jsonChacras1["data"][n]["attributes"];
+      var { stock, name, stockControl } = ingredientesChacras2;
+      var nombreIngredientesChacras1 = [name];
+      var stockIngredientesChacras1 = [stock];
+      hoja.getRange((n + 1) + 1, 7).setValue(nombreIngredientesChacras1);
+      hoja.getRange((n + 1) + 1, 8).setValue(stockIngredientesChacras1);
+    };
+  /*
+    for (var m = 0; m < jsonProduccion["data"].length; m++) {
+      var ingredientesProduccion = jsonProduccion["data"][m]["attributes"];
+      var { stock, name, stockControl } = ingredientesProduccion;
+      var nombreIngredientesProduccion = [name];
+      var stockIngredientesProduccion = [stock];
+      hoja.getRange((m + 1) + 1, 11).setValue(nombreIngredientesProduccion);
+      hoja.getRange((m + 1) + 1, 12).setValue(stockIngredientesProduccion);
+    };
+    */
+};
+function importaProductos() {
+
+  var libro = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = libro.getSheetByName("Productos");
+  var accessToken = getFudoAccessTokenBombal();
+  var accessTokenChacras = getFudoAccessTokenChacras();
+  var accessTokenMaipu = getFudoAccessTokenMaipu();
+  var accessTokenDorrego = getFudoAccessTokenDorrego();
+  var apiUrl = "https://api.fu.do/v1alpha1/products"; // Replace with actual endpoint
+
+  var headers = {
+    "Authorization": "Bearer " + accessToken
+  };
+  var options = {
+    method: "get",
+    headers: headers
+  };
+  var headersChacras = {
+    "Authorization": "Bearer " + accessTokenChacras
+  };
+  var optionsChacras = {
+    method: "get",
+    headers: headersChacras
+  };
+  var headersMaipu = {
+    "Authorization": "Bearer " + accessTokenMaipu
+  };
+  var optionsMaipu = {
+    method: "get",
+    headers: headersMaipu
+  };
+  var headersDorrego = {
+    "Authorization": "Bearer " + accessTokenDorrego
+  };
+  var optionsDorrego = {
+    method: "get",
+    headers: headersDorrego
+  };
+
+  var libro = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = libro.getSheetByName("Productos");
+
+  var response = UrlFetchApp.fetch(apiUrl, options);
+  var responseDataBombal = response.getContentText();
+  var json = JSON.parse(responseDataBombal);
+  var responseDorrego = UrlFetchApp.fetch(apiUrl, optionsDorrego);
+  var contentDorrego = responseDorrego.getContentText();
+  var jsonDorrego = JSON.parse(contentDorrego);
+  var responseMaipu = UrlFetchApp.fetch(apiUrl, optionsMaipu);
+  var contentMaipu = responseMaipu.getContentText();
+  var jsonMaipu = JSON.parse(contentMaipu);
+   
+  var responseChacras1 = UrlFetchApp.fetch(apiUrl, optionsChacras);
+
+  var contentChacras1 = responseChacras1.getContentText();
+  var jsonChacras1 = JSON.parse(contentChacras1);
+  /*var responseChacras2 = UrlFetchApp.fetch(urlIngredientes, paramsChacras2);
+  var contentChacras2 = responseChacras2.getContentText();
+  var jsonChacras2 = JSON.parse(contentChacras2);
+
+
+  var responseProduccion = UrlFetchApp.fetch(urlIngredientes, paramsProduccion);
+  var contentProduccion = responseProduccion.getContentText();
+  var jsonProduccion = JSON.parse(contentProduccion);
+  */
+
+  //Acá hice la configuración de la pagina donde van a venir los datos
+
+  hoja.getRange(1, 1).setValue("Producto Bombal");
+  hoja.getRange(1, 2).setValue("Cantidad Bombal");
+  hoja.getRange(1, 3).setValue("Producto Dorrego");
+  hoja.getRange(1, 4).setValue("Cantidad Dorrego");
+  hoja.getRange(1, 5).setValue("Producto Maipu");
+  hoja.getRange(1, 6).setValue("Cantidad Maipu");
+  hoja.getRange(1, 7).setValue("Producto Chacras 1");
+  hoja.getRange(1, 8).setValue("Cantidad Chacras 1");
+  
+
+  // Bucles for para obtener y manejar los datos que obtuvimos mediante la API
+
+  for (var i = 0; i < json["data"].length; i++) {
+    var ProductosBombal = json["data"][i]["attributes"];
+    var { stock, name } = ProductosBombal;
+    var nombreProductosBombal = [name];
+    var stockProductosBombal = [stock];
+    hoja.getRange((i + 1) + 1, 1).setValue(nombreProductosBombal);
+    hoja.getRange((i + 1) + 1, 2).setValue(stockProductosBombal);
+  };
+
+    for (var j = 0; j < jsonDorrego["data"].length; j++) {
+      var ProductosDorrego = jsonDorrego["data"][j]["attributes"];
+      var { stock, name, stockControl } = ProductosDorrego;
+      var nombreProductosDorrego = [name];
+      var stockProductosDorrego = [stock];
+      hoja.getRange((j + 1) + 1, 3).setValue(nombreProductosDorrego);
+      hoja.getRange((j + 1) + 1, 4).setValue(stockProductosDorrego);
+    };
+
+    for (var k = 0; k < jsonMaipu["data"].length; k++) {
+      var ProductosMaipu = jsonMaipu["data"][k]["attributes"];
+      var { stock, name } = ProductosMaipu;
+      var nombreProductosMaipu = [name];
+      var stockProductosMaipu = [stock];
+      hoja.getRange((k + 1) + 1, 5).setValue(nombreProductosMaipu);
+      hoja.getRange((k + 1) + 1, 6).setValue(stockProductosMaipu);
+    };
+    /*
+    for (var l = 0; l < jsonChacras2["data"].length; l++) {
+      var ProductosChacras2 = jsonChacras2["data"][l]["attributes"];
+      var { stock, name, stockControl } = ProductosChacras2;
+      var nombreProductosChacras2 = [name];
+      var stockProductosChacras2 = [stock];
+      hoja.getRange((l + 1) + 1, 7).setValue(nombreProductosChacras2);
+      hoja.getRange((l + 1) + 1, 8).setValue(stockProductosChacras2);
+    };
+    */
+
+    for (var n = 0; n < jsonChacras1["data"].length; n++) {
+      var ProductosChacras2 = jsonChacras1["data"][n]["attributes"];
+      var { stock, name, stockControl } = ProductosChacras2;
+      var nombreProductosChacras1 = [name];
+      var stockProductosChacras1 = [stock];
+      hoja.getRange((n + 1) + 1, 7).setValue(nombreProductosChacras1);
+      hoja.getRange((n + 1) + 1, 8).setValue(stockProductosChacras1);
+    };
+  /*
+    for (var m = 0; m < jsonProduccion["data"].length; m++) {
+      var ProductosProduccion = jsonProduccion["data"][m]["attributes"];
+      var { stock, name, stockControl } = ProductosProduccion;
+      var nombreProductosProduccion = [name];
+      var stockProductosProduccion = [stock];
+      hoja.getRange((m + 1) + 1, 11).setValue(nombreProductosProduccion);
+      hoja.getRange((m + 1) + 1, 12).setValue(stockProductosProduccion);
+    };
+    */
+  
+
+};
+function guardarPDF() {
+  var libro = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = libro.getSheetByName("Stock/Real");
+  var nombreHoja = hoja.getSheetName();
+  var blob = libro.getAs('application/pdf');
+  var fecha = Utilities.formatDate(new Date(), "GMT-3", "dd/MM/yyyy");
+
+  carpetaMaestra.createFile(blob).setName(nombreHoja + " " + fecha);
+
+};
+function ExportPDF() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = spreadsheet.getSheetByName("Stock/Real");
+  var range = sheet.getRange('A1:S219');
+  var fecha = Utilities.formatDate(new Date(), "GMT-3", "dd/MM/yyyy");
+  var exportUrl = 'https://docs.google.com/spreadsheets/d/' + spreadsheet.getId()
+    + '/export?exportFormat=pdf&format=pdf'
+    + '&size=a5'                  //Tamaño del papel: 0-LETTER,1-TABLOID,2-LEGAL,3-STATEMENT,4-EXECUTIVE,5-FOLIO,6-A3,7-A4,8-A5,9-B4,10-B5
+    + '&portrait=true'              //Orientación: False - Horizontal / True - Vertical
+    + '&fitw=true'                   //Forzamos que quepa correctamente en el ancho de la hoja
+    + '&top_margin=0.5'             //Margen Superior          
+    + '&bottom_margin=0.5'          //Margen inferior         
+    + '&left_margin=0.5'             //Margen Izquierdo          
+    + '&right_margin=0.5'            //Margen Derecho        
+    + '&sheetnames=false'            //Marcamos si se ha de poner el nombre de las hojas o no
+    + '&printtitle=false'            //Marcamos si se ha imprimir el titulo del documento o no
+    + '&pagenum=false'               //Indicamos si se de pintar el número de página
+    + '&gridlines=true'              //Marcamos si queremos que se vean las lineas de las celdas o no   
+    + '&fzr=FALSE'                   //Frozen: marcamos si las cabeceras se han de ir imprimiendo o no en las consecutivas hojas
+
+    + '&gid=' + sheet.getSheetId()   //Identificador del tab
+    + '&r1=' + (range.getRow() - 1)  //Margenes del rango seleccionado
+    + '&r2=' + range.getLastRow()
+    + '&c1=' + (range.getColumn() - 1)
+    + '&c2=' + range.getLastColumn();
+
+  //Hacemos la petición para pedir el PDF
+  var response = UrlFetchApp.fetch(exportUrl, { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } });
+
+  //Creamos el PDF con el binario que nos devuelve la petición anterior
+  var blob = response.getBlob();
+  blob = blob.setName(spreadsheet.getName() + "");
+  var pdfFile = DriveApp.createFile(blob);
+  carpetaMaestra.createFile(blob).setName("Stock/Real " + fecha);
+  // SpreadsheetApp.getUi().alert(pdfFile.getUrl());
+}
+function imprimirPedidos() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetBombal = spreadsheet.getSheetByName("Imprimir BOMBAL");
+  var rangeBombal = sheetBombal.getSelection().getNextDataRange(SpreadsheetApp.Direction.DOWN).activate();
+  var fecha = Utilities.formatDate(new Date(), "GMT-3", "dd/MM/yyyy");
+  var exportUrl = 'https://docs.google.com/spreadsheets/d/' + spreadsheet.getId()
+    + '/export?exportFormat=pdf&format=pdf'
+    + '&size=a5'                  //Tamaño del papel: 0-LETTER,1-TABLOID,2-LEGAL,3-STATEMENT,4-EXECUTIVE,5-FOLIO,6-A3,7-A4,8-A5,9-B4,10-B5
+    + '&portrait=true'              //Orientación: False - Horizontal / True - Vertical
+    + '&fitw=true'                   //Forzamos que quepa correctamente en el ancho de la hoja
+    + '&top_margin=0.5'             //Margen Superior          
+    + '&bottom_margin=0.5'          //Margen inferior         
+    + '&left_margin=0.5'             //Margen Izquierdo          
+    + '&right_margin=0.5'            //Margen Derecho        
+    + '&sheetnames=false'            //Marcamos si se ha de poner el nombre de las hojas o no
+    + '&printtitle=false'            //Marcamos si se ha imprimir el titulo del documento o no
+    + '&pagenum=false'               //Indicamos si se de pintar el número de página
+    + '&gridlines=true'              //Marcamos si queremos que se vean las lineas de las celdas o no   
+    + '&fzr=FALSE'                   //Frozen: marcamos si las cabeceras se han de ir imprimiendo o no en las consecutivas hojas
+
+    + '&gid=' + sheetBombal.getSheetId()   //Identificador del tab
+    + '&r1=' + (rangeBombal.getRow() - 1)  //Margenes del rango seleccionado
+    + '&r2=' + rangeBombal.getLastRow()
+    + '&c1=' + (rangeBombal.getColumn() - 1)
+    + '&c2=' + rangeBombal.getLastColumn();
+
+  //Hacemos la petición para pedir el PDF
+  var response = UrlFetchApp.fetch(exportUrl, { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } });
+
+  //Creamos el PDF con el binario que nos devuelve la petición anterior
+  var blob = response.getBlob();
+  blob = blob.setName(spreadsheet.getName() + "");
+  var pdfFile = DriveApp.createFile(blob);
+  carpetaMaestra.createFile(blob).setName("Stock/Real " + fecha);
+  // SpreadsheetApp.getUi().alert(pdfFile.getUrl());
+}
+
+
+function mostrarDia() {
+  var spreadsheet = SpreadsheetApp.getActive();
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('B:Y').activate();
+  spreadsheet.getActiveSheet().showColumns(2, 22);
+  var ej = SpreadsheetApp.getActiveSheet().getRange('Z2').getValue();
+  switch (ej) {
+    case 1:
+      spreadsheet.getRangeList(['B:C']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRangeList(['E:Y']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRange('3:3').activate();
+      var currentCell = spreadsheet.getCurrentCell();
+      spreadsheet.getSelection().getNextDataRange(SpreadsheetApp.Direction.DOWN).activate();
+      currentCell.activateAsCurrentCell();
+      spreadsheet.getActiveRange().sort({ column: 4, ascending: false });
+      break;
+    case 2:
+      spreadsheet.getRangeList(['B:F']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRangeList(['H:Y']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRange('3:3').activate();
+      var currentCell = spreadsheet.getCurrentCell();
+      spreadsheet.getSelection().getNextDataRange(SpreadsheetApp.Direction.DOWN).activate();
+      currentCell.activateAsCurrentCell();
+      spreadsheet.getActiveRange().sort({ column: 7, ascending: false });
+      break;
+    case 3:
+      spreadsheet.getRangeList(['B:I']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRangeList(['K:Y']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRange('3:3').activate();
+      var currentCell = spreadsheet.getCurrentCell();
+      spreadsheet.getSelection().getNextDataRange(SpreadsheetApp.Direction.DOWN).activate();
+      currentCell.activateAsCurrentCell();
+      Logger.log(spreadsheet.getActiveRange().sort({ column: 10, ascending: false }));
+      Logger.log(currentCell);
+      break;
+    case 4:
+      spreadsheet.getRangeList(['B:L']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRangeList(['N:Y']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRange('3:3').activate();
+      var currentCell = spreadsheet.getCurrentCell();
+      spreadsheet.getSelection().getNextDataRange(SpreadsheetApp.Direction.DOWN).activate();
+      currentCell.activateAsCurrentCell();
+      spreadsheet.getActiveRange().sort({ column: 13, ascending: false });
+      break;
+    case 5:
+      spreadsheet.getRangeList(['B:O']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRangeList(['Q:Y']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRange('3:3').activate();
+      var currentCell = spreadsheet.getCurrentCell();
+      spreadsheet.getSelection().getNextDataRange(SpreadsheetApp.Direction.DOWN).activate();
+      currentCell.activateAsCurrentCell();
+      spreadsheet.getActiveRange().sort({ column: 16, ascending: false });
+      break;
+    case 6:
+      spreadsheet.getRangeList(['B:R']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRangeList(['T:Y']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRange('3:3').activate();
+      var currentCell = spreadsheet.getCurrentCell();
+      spreadsheet.getSelection().getNextDataRange(SpreadsheetApp.Direction.DOWN).activate();
+      currentCell.activateAsCurrentCell();
+      spreadsheet.getActiveRange().sort({ column: 19, ascending: false });
+      break;
+    case 7:
+      spreadsheet.getRangeList(['B:U']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRangeList(['W:Y']).activate();
+      spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+      spreadsheet.getRange('3:3').activate();
+      var currentCell = spreadsheet.getCurrentCell();
+      spreadsheet.getSelection().getNextDataRange(SpreadsheetApp.Direction.DOWN).activate();
+      currentCell.activateAsCurrentCell();
+      spreadsheet.getActiveRange().sort({ column: 22, ascending: false });
+      break;
+  }
+}
+
+function ordenar() {
+  var spreadsheet = SpreadsheetApp.getActive();
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('3:3').activate();
+  var currentCell = spreadsheet.getCurrentCell();
+  spreadsheet.getSelection().getNextDataRange(SpreadsheetApp.Direction.DOWN).activate();
+  currentCell.activateAsCurrentCell();
+  spreadsheet.getActiveRange().sort({ column: 22, ascending: false });
+};
+
+function QuitarDuplicados() {
+  var spreadsheet = SpreadsheetApp.getActive();
+  var sheet = spreadsheet.getSheets()[0];
+  sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).activate();
+  spreadsheet.getActiveRange().offset(1, 0, spreadsheet.getActiveRange().getNumRows() - 1).activate();
+  spreadsheet.getActiveRange().removeDuplicates([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268]).activate();
+
+};
+
+
+
+
+function selec() {
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('A1:B1').activate();
+  var currentCell = spreadsheet.getCurrentCell();
+  spreadsheet.getSelection().getNextDataRange(SpreadsheetApp.Direction.DOWN).activate();
+  currentCell.activateAsCurrentCell();
+};
+
+function makeFudoAPIRequest() {
+  var accessToken = getFudoAccessToken();
+  var apiUrl = "https://api.fu.do/"; // Replace with actual endpoint
+
+  var headers = {
+    "Authorization": "Bearer " + accessToken
+  };
+
+  var options = {
+    method: "get",
+    headers: headers
+  };
+
+  var response = UrlFetchApp.fetch(apiUrl, options);
+  var responseData = response.getContentText();
+  // Process responseData as needed
+}
+
